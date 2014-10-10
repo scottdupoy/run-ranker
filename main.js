@@ -26,7 +26,8 @@ app.use(session({
 }));
 
 // routes
-app.get('/', routes.home());
+app.get('/', routes.home(config));
+app.get('/authorized', routes.authorized(config));
 
 server.listen(config.http.port, config.http.host, function() {
   console.log('server listening on ' + config.http.host + ':' + config.http.port);

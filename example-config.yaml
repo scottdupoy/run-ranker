@@ -5,3 +5,7 @@ http:
 security:
     sessionSecret: testsecret123
 
+strava:
+    clientId: 123
+    clientSecret: 123abc456def
+
