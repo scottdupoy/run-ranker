@@ -7,6 +7,7 @@ var favicon = require('serve-favicon');
 var yaml = require('js-yaml');
 var fs = require('fs');
 
+var routes = require('./routes/routes');
 var app = express();
 var server = http.createServer(app);
 var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, 'config.yaml'), 'utf8'));
@@ -25,11 +26,7 @@ app.use(session({
 }));
 
 // routes
-app.get('/', function(req, res) {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('rdc');
-});
-
+app.get('/', routes.home());
 
 server.listen(config.http.port, config.http.host, function() {
   console.log('server listening on ' + config.http.host + ':' + config.http.port);
