@@ -21,21 +21,19 @@ exports.authorized = function(config) {
     var path = '/oauth/token?client_id=' + config.strava.clientId + '&client_secret=' + config.strava.clientSecret + '&code=' + req.query.code;
     var accessTokenRequest = http.request({
       host: 'www.strava.com',
-      port: 443,
+      port: 80,
       path: path,
       method: 'POST'
     },
     function(tokenResponse) {
-      //console.log('token response headers: ' + JSON.stringify(tokenResponse.headers));
-      console.log('token response!');
+      console.log('token response headers: ' + JSON.stringify(tokenResponse.headers));
       // TODO: get access token and put it in the session!
-    }).end();
-    
-//    on('error', function(err) {
-//      // TODO: redirect to an error page
-//      console.log('get access token error: ' + err);
- //   })
- //   .end();
+    })    
+    .on('error', function(err) {
+      // TODO: redirect to an error page
+       console.log('get access token error: ' + err);
+    })
+    .end();
 
   };
 };
