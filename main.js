@@ -4,9 +4,12 @@ var path = require('path');
 var session = require('express-session');
 var bodyParser = require('body-parser');
 var favicon = require('serve-favicon');
+var yaml = require('js-yaml');
+var fs = require('fs');
 
 var app = express();
 var server = http.createServer(app);
+var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, 'config.yaml'), 'utf8'));
 
 // set up app
 app.set('view engine', 'ejs');
@@ -16,7 +19,7 @@ app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
-  secret: 'dummy-secret',
+  secret: config.security.sessionSecret,
   resave: true,
   saveUninitialized: true,
 }));
@@ -28,18 +31,7 @@ app.get('/', function(req, res) {
 });
 
 
-var host = '0.0.0.0';
-var port = process.env.PORT || 8082;
-server.listen(port, host, function() {
-  console.log('server listening on ' + host + ':' + port);
+server.listen(config.http.port, config.http.host, function() {
+  console.log('server listening on ' + config.http.host + ':' + config.http.port);
 });
 
-
-
-/*
-var http = require('http');
-http.createServer(function(req, res) {
-  res.writeHead(200, { 'Content-Type': 'text/plain'});
-  res.end('rdc: ' + process.env.PORT);
-}).listen(process.env.PORT);
-*/
