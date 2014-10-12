@@ -2,9 +2,12 @@
 <html>
   <head>
     <title>run</title>
+    <script src='/scripts/jquery-2.1.1.min.js'></script>
+    <script src='/socket.io/socket.io.js'></script>
+    <script src='/scripts/socket-client.js'></script>
   </head>
   <body>
-<pre>
+<pre id='content'>
 rdc landing
 
 <a href='/logout'>logout</a>
@@ -13,7 +16,9 @@ access_token: <%= access_token %>
 id:           <%= id %>
 first name:   <%= firstname %>
 last name:    <%= lastname %>
-email:        <%= email %>
+
+<a id='socket' href='#'>socket</a>
+</pre><pre id='log'>
 </pre>
   </body>
 </html>

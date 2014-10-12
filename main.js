@@ -7,11 +7,17 @@ var cookieParser = require('cookie-parser');
 var favicon = require('serve-favicon');
 var yaml = require('js-yaml');
 var fs = require('fs');
+var socketio = require('socket.io');
 
 var routes = require('./routes/routes');
+
 var app = express();
-var server = http.createServer(app);
+var server = http.Server(app);
+var io = socketio(server);
 var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, 'config.yaml'), 'utf8'));
+
+// socket hash to bring all the comms together
+var socketHash = { };
 
 // set up app
 app.set('view engine', 'ejs');
@@ -35,4 +41,31 @@ app.get('/logout', routes.logout());
 server.listen(config.http.port, config.http.host, function() {
   console.log('server listening on ' + config.http.host + ':' + config.http.port);
 });
+
+//io.set('log level', 1);
+io.sockets.on('connection', function(socket) {
+
+  socket.emit('log', 'Connected to server');  
+
+  var guid = null;
+  console.log('SOCKET: client connected');
+  /*
+  socket.on('start', function(sessionGuid) {
+    console.log('SOCKET: ' + sessionGuid + ' - start');
+    // todo: if the start comes in after we have some results
+    //       then these will have needed caching and then need 
+    //       flushing through the socket
+    socketHash[sessionGuid] = socket;
+  });
+  */
+  socket.on('disconnect', function() {
+    if (guid === null) {
+      console.log('SOCKET: DISCONNECT: unknown, ignoring');
+      return;
+    }
+    console.log('SOCKET: DISCONNECT: ' + guid);
+    delete socketHash[guid];
+  });
+});
+
 

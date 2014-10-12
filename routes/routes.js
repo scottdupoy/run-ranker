@@ -12,7 +12,6 @@ exports.home = function(config) {
       id: req.session.athlete_id,
       firstname: req.session.athlete_firstname,
       lastname: req.session.athlete_lastname,
-      email: req.session.athlete_email
     });
   };
 };
