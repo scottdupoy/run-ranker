@@ -9,10 +9,7 @@ $(function() {
     log.html(log.html() + data + '\n');
   });
 
-  $('#socket').click(function() {
-    console.log('sending message via socket');
-    socket.emit('req', 'test request');
-    return false;
-  });
+  // initiate async load
+  socket.emit('load', guid);
 });
 

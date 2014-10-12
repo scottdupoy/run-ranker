@@ -44,28 +44,27 @@ server.listen(config.http.port, config.http.host, function() {
 
 //io.set('log level', 1);
 io.sockets.on('connection', function(socket) {
-
-  socket.emit('log', 'Connected to server');  
-
+  console.log('SOCKET: connected');
   var guid = null;
-  console.log('SOCKET: client connected');
-  /*
-  socket.on('start', function(sessionGuid) {
-    console.log('SOCKET: ' + sessionGuid + ' - start');
+
+  socket.emit('log', 'connected to server');  
+  socket.on('load', function(sessionGuid) {
+    guid = sessionGuid;
+    console.log('SOCKET: load: ' + guid);
     // todo: if the start comes in after we have some results
     //       then these will have needed caching and then need 
     //       flushing through the socket
-    socketHash[sessionGuid] = socket;
+    socketHash[guid] = socket;
+    socket.emit('log', 'load message received by server');
   });
-  */
+  
   socket.on('disconnect', function() {
     if (guid === null) {
-      console.log('SOCKET: DISCONNECT: unknown, ignoring');
+      console.log('SOCKET: disconnect: unknown, ignoring');
       return;
     }
-    console.log('SOCKET: DISCONNECT: ' + guid);
+    console.log('SOCKET: disconnect: ' + guid);
     delete socketHash[guid];
   });
 });
-
 

@@ -2,6 +2,9 @@
 <html>
   <head>
     <title>run</title>
+    <script>
+      var guid = "<%= guid %>";
+    </script>
     <script src='/scripts/jquery-2.1.1.min.js'></script>
     <script src='/socket.io/socket.io.js'></script>
     <script src='/scripts/socket-client.js'></script>
@@ -16,10 +19,8 @@ access_token: <%= access_token %>
 id:           <%= id %>
 first name:   <%= firstname %>
 last name:    <%= lastname %>
-
-<a id='socket' href='#'>socket</a>
-</pre><pre id='log'>
 </pre>
+<pre id='log'></pre>
   </body>
 </html>
 

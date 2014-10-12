@@ -6,12 +6,13 @@ exports.home = function(config) {
       console.log('home');
       return res.render('home', { clientId: config.strava.clientId });
     }
-    console.log('landing: ' + req.session.athlete_firstname + ' ' + req.session.athlete_lastname);
+    console.log('landing: ' + req.session.athlete_firstname + ' ' + req.session.athlete_lastname + ' - ' + req.session.guid);
     return res.render('landing', {
       access_token: req.session.access_token,
       id: req.session.athlete_id,
       firstname: req.session.athlete_firstname,
       lastname: req.session.athlete_lastname,
+      guid: req.session.guid
     });
   };
 };
@@ -54,6 +55,7 @@ exports.authorized = function(config) {
         req.session.athlete_data_preference = data.athlete.data_preference;
         req.session.athlete_measurement_preference = data.athlete.measurement_preference;
         req.session.athlete_email = data.athlete.email;
+        req.session.guid = guid();
         res.redirect('/');
       });
     })
@@ -64,4 +66,12 @@ exports.authorized = function(config) {
     .end();
   };
 };
+
+//http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+function guid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
+}
 
