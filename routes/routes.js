@@ -1,18 +1,27 @@
-var https = require('https');
-
-exports.home = function(config) {
+exports.home = function(config, bridge, retriever) {
   return function(req, res) {
+    var ip = getClientIp(req);
     if (req.session == null || req.session.access_token == null) {
-      console.log('home');
+      console.log('home: source ip: ' + ip);
       return res.render('home', { clientId: config.strava.clientId });
     }
-    console.log('landing: ' + req.session.athlete_firstname + ' ' + req.session.athlete_lastname + ' - ' + req.session.guid);
-    return res.render('landing', {
+
+    var guid = bridge.connect();
+    req.session.guid = guid;
+    console.log('landing: source ip: ' + ip + ' => ' + req.session.athlete_firstname + ' ' + req.session.athlete_lastname + ' - ' + guid);
+
+    res.render('landing', {
       access_token: req.session.access_token,
       id: req.session.athlete_id,
       firstname: req.session.athlete_firstname,
       lastname: req.session.athlete_lastname,
-      guid: req.session.guid
+      guid: guid,
+    });
+
+    retriever.retrieve(config, bridge, {
+      id: req.session.athlete_id,
+      guid: guid,
+      access_token: req.session.access_token,
     });
   };
 };
@@ -25,53 +34,38 @@ exports.logout = function() {
   };
 };
 
-exports.authorized = function(config) {
+exports.authorized = function(config, stravaApi) {
   return function(req, res) {
     if (req.query.error) {
       console.log('Login not authorized');
       return res.redirect('/');
     }
     
-    var path = '/oauth/token?client_id=' + config.strava.clientId + '&client_secret=' + config.strava.clientSecret + '&code=' + req.query.code;
-    var accessTokenRequest = https.request({
-      host: 'www.strava.com',
-      port: 443,
-      path: path,
-      method: 'POST'
-    },
-    function(tokenResponse) {
-      var data = '';
-      tokenResponse.on('data', function(chunk) {
-        data += chunk;
-      });
-      tokenResponse.on('end', function() {
-        data = JSON.parse(data);
-        req.session.access_token = data.access_token;
-        req.session.athlete_id = data.athlete.id;
-        req.session.athlete_firstname = data.athlete.firstname;
-        req.session.athlete_lastname = data.athlete.lastname;
-        req.session.athlete_profile_medium = data.athlete.profile_medium;
-        req.session.athlete_profile_large = data.athlete.profile;
-        req.session.athlete_data_preference = data.athlete.data_preference;
-        req.session.athlete_measurement_preference = data.athlete.measurement_preference;
-        req.session.athlete_email = data.athlete.email;
-        req.session.guid = guid();
-        res.redirect('/');
-      });
-    })
-    .on('error', function(err) {
-       console.log('get access token error: ' + err);
-       res.redirect('/');
-    })
-    .end();
+    stravaApi.getAccessToken(config, req.query.code, function(err, data) {
+      if (err) {
+        // TODO: propogate the error to the UI, will need to cache in the session
+        console.log('get access token error: ' + err);
+        return res.redirect('/');
+      }
+      req.session.access_token = data.access_token;
+      req.session.athlete_id = data.athlete.id;
+      req.session.athlete_firstname = data.athlete.firstname;
+      req.session.athlete_lastname = data.athlete.lastname;
+      req.session.athlete_profile_medium = data.athlete.profile_medium;
+      req.session.athlete_profile_large = data.athlete.profile;
+      req.session.athlete_data_preference = data.athlete.data_preference;
+      req.session.athlete_measurement_preference = data.athlete.measurement_preference;
+      req.session.athlete_email = data.athlete.email;
+      res.redirect('/');
+    });
   };
 };
 
-//http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-function guid() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-    return v.toString(16);
-  });
+function getClientIp(req) {
+  var ip = req.headers['x-forwarded-for'];
+  if (!ip) {
+    ip = req.connection.remoteAddress;
+  }
+  return ip;
 }
 
