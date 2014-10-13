@@ -10,5 +10,5 @@ strava:
     clientSecret: 123abc456def
 
 messaging:
-    connectionString: amqp://scott:dogfood@localhost:5672
+    connectionString: amqp://guest:guest@localhost:5672
 
