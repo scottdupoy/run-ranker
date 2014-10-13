@@ -34,16 +34,23 @@ app.use(session({
   saveUninitialized: true,
 }));
 
-// comms
-io.connect(server, bridge);
-messaging.start(bridge);
-
 // routes
 app.get('/', routes.home(config, bridge, retriever));
 app.get('/authorized', routes.authorized(config, stravaApi));
 app.get('/logout', routes.logout());
 
-server.listen(config.http.port, config.http.host, function() {
-  console.log('server listening on ' + config.http.host + ':' + config.http.port);
+// comms
+io.connect(server, bridge);
+messaging.start(config, bridge, function(err) {
+  if (err) {
+    console.log('ERROR: could not connect rabbitmq server: ' + err);
+    return;
+  }
+
+  console.log('rabbitmq connection initiated, starting http server');
+  server.listen(config.http.port, config.http.host, function() {
+    console.log('server listening on ' + config.http.host + ':' + config.http.port);
+  });
 });
+
 

@@ -1,4 +1,5 @@
 var https = require('https');
+var perPage = 25;
 
 module.exports.getAccessToken = function(config, code, callback) {
   var path = '/oauth/token?client_id=' + config.strava.clientId + '&client_secret=' + config.strava.clientSecret + '&code=' + code;
@@ -33,7 +34,7 @@ function retrieveActivitiesPage(config, accessToken, latestId, page, results, ca
     host: 'www.strava.com',
     port: 443,
     method: 'GET',
-    path: '/api/v3/athlete/activities?page=' + page + '&per_page=10&access_token=' + accessToken,
+    path: '/api/v3/athlete/activities?page=' + page + '&per_page=' + perPage + '&access_token=' + accessToken,
   };
   https.request(options, function(response) {
     var data = '';

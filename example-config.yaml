@@ -9,3 +9,6 @@ strava:
     clientId: 123
     clientSecret: 123abc456def
 
+messaging:
+    connectionString: amqp://scott:dogfood@localhost:5672
+
