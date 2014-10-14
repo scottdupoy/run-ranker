@@ -32,9 +32,8 @@ module.exports.start = function(config, bridge, callback) {
   var createAnalysisResultsQueue = function() {
     console.log('amqp: exchange "run-ranker" created and ready');
     analysisResultsQueue = connection.queue('analysis-results', {
-      durable: true,
-      exclusive: true,
-      autoDelete: false,
+      durable: false,
+      autoDelete: true,
     },
     bindAnalysisResultsQueue);
   };
