@@ -40,14 +40,26 @@ module.exports.start = function(config, bridge, callback) {
 
   var bindAnalysisResultsQueue = function() {
     console.log('amqp: queue "analysis-results" created and ready');
-    // TODO: bindings
-    // TODO: subcriptions
-    // TODO: handlers (some kind of proxy adapter) to bring it
-    //       all back together - might need a layer between this
-    //       and the bridge to coordinate everything
-    callback();
+    analysisResultsQueue.bind("run-ranker", "analysis-result", function() {
+      console.log('amqp: queue "analysis-results" bound to key "analysis-result"');
+      console.log('amqp: subscribing to results queue');
+      analysisResultsQueue.subscribe(subscriber);
+      callback();
+    });
+  };
+
+  var subscriber = function(result) {
+    console.log('analysis result: ' + result.guid);
+    bridge.send(result.guid, 'log', 'analysis completed: ' + result.guid);
+    result.bestEfforts.forEach(function(bestEffort) {
+      bridge.send(result.guid, 'log', '  ' + bestEffort.distance.name + ' = ' + bestEffort.effort.duration);
+    });
   };
 
   connection.on('ready', createExchange);
+};
+
+module.exports.publishAnalysisRequest = function(request) {
+  exchange.publish("analysis-request", request, { });
 };
 

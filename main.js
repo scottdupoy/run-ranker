@@ -35,7 +35,7 @@ app.use(session({
 }));
 
 // routes
-app.get('/', routes.home(config, bridge, retriever));
+app.get('/', routes.home(config, bridge, retriever, messaging));
 app.get('/authorized', routes.authorized(config, stravaApi));
 app.get('/logout', routes.logout());
 
