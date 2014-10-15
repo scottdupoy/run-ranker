@@ -80,9 +80,25 @@ function createExchange() {
   });
 };
 
-var subscriber = function(message) {
-  console.log('RESULT: ' + JSON.stringify(message));
-  console.log('  ' + message.message);
+var subscriber = function(result) {
+  try {
+    console.log('RESULT: ');
+    console.log('  guid:        ' + result.guid);
+    console.log('  athleteId:   ' + result.athleteId);
+    console.log('  activityId:  ' + result.activityId);
+    console.log('    activity.distanceInKm:  ' + result.activity.distanceInKm);
+    console.log('    activity.duration:      ' + result.activity.duration);
+    console.log('    activity.points.length: ' + result.activity.points.length);
+    result.bestEfforts.forEach(function(effort) {
+      console.log('      best effort: ' + effort.distance.name);
+      console.log('        distanceInKm:  ' + effort.effort.distanceInKm);
+      console.log('        duration:      ' + effort.effort.duration);
+      console.log('        points.length: ' + effort.effort.points.length);
+    });
+  }
+  catch (e) {
+    console.log('ERROR: problem handling result: ' + e);
+  }
   fileResultReceived();
 }
 
