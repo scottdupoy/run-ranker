@@ -1,7 +1,5 @@
-var db = require('./db');
+var db = require('../shared/db');
 var stravaApi = require('./stravaApi');
-  //    - inform client of # of analysis to be done
-//var tempFs = require('fs');
 
 // really these would be user specific and retrieved from the database.
 // there would probably be less than this amount.
