@@ -56,11 +56,10 @@ function retrieveActivitiesPage(config, accessToken, latestId, page, results, ca
           results.push({
             id: activity.id,
             name: activity.name,
-            distance: activity.distance,
+            distanceInKm: activity.distance / 1000.0,
             moving_time: activity.moving_time,
             elapsed_time: activity.elapsed_time,
             start_date: activity.start_date_local,
-
           });
         }
       });

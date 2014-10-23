@@ -4,16 +4,16 @@ var stravaApi = require('./stravaApi');
 // really these would be user specific and retrieved from the database.
 // there would probably be less than this amount.
 var distances = [
-  { id: 1, distance: 400, name: "400 m", type: "metric" },
-  { id: 2, distance: 1000, name: "1 km", type: "metric" },
-  { id: 3, distance: 5000, name: "5 km", type: "metric" },
-  { id: 4, distance: 10000, name: "10 km", type: "metric" },
-  { id: 5, distance: 804.672, name: "0.5 miles", type: "imperial" },
-  { id: 6, distance: 1609.344, name: "1 mile", type: "imperial" },
-  { id: 7, distance: 3218.688, name: "2 miles", type: "imperial" },
-  { id: 8, distance: 8046.72, name: "5 miles", type: "imperial" },
-  { id: 9, distance: 16093.44, name: "10 miles", type: "imperial" },
-  { id: 10, distance: 21097.494, name: "Half marathon", type: "general" },
+  { id: 1, distanceInKm: 0.4, name: "400 m", type: "metric" },
+  { id: 2, distanceInKm: 1, name: "1 km", type: "metric" },
+  { id: 3, distanceInKm: 5, name: "5 km", type: "metric" },
+  { id: 4, distanceInKm: 10, name: "10 km", type: "metric" },
+  { id: 5, distanceInKm: 0.804672, name: "0.5 miles", type: "imperial" },
+  { id: 6, distanceInKm: 1.609344, name: "1 mile", type: "imperial" },
+  { id: 7, distanceInKm: 3.218688, name: "2 miles", type: "imperial" },
+  { id: 8, distanceInKm: 8.04672, name: "5 miles", type: "imperial" },
+  { id: 9, distanceInKm: 16.09344, name: "10 miles", type: "imperial" },
+  { id: 10, distanceInKm: 21.097494, name: "Half marathon", type: "general" },
 ];
 
 module.exports.retrieve = function(config, bridge, messaging, details) {
@@ -82,6 +82,11 @@ module.exports.retrieve = function(config, bridge, messaging, details) {
           guid: details.guid,
           athleteId: details.id,
           activityId: newActivity.id,
+          name: newActivity.name,
+          movingTime: newActivity.moving_time,
+          elapsedTime: newActivity.elapsed_time,
+          distanceInKm: newActivity.distanceInKm,
+          startDate: newActivity.start_date,
           distances: distances,
           points: points,
         };
