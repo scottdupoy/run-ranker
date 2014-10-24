@@ -1,4 +1,4 @@
-exports.home = function(config, bridge, retriever, messaging) {
+exports.home = function(config, bridge, retriever, messaging, db) {
   return function(req, res) {
     var ip = getClientIp(req);
     if (req.session == null || req.session.access_token == null) {
@@ -18,7 +18,7 @@ exports.home = function(config, bridge, retriever, messaging) {
       guid: guid,
     });
 
-    retriever.retrieve(config, bridge, messaging, {
+    retriever.retrieve(config, bridge, messaging, db, {
       id: req.session.athlete_id,
       guid: guid,
       access_token: req.session.access_token,

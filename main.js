@@ -15,6 +15,7 @@ var io = require('./app/sockets');
 var messaging = require('./app/messaging');
 var stravaApi = require('./app/stravaApi');
 var retriever = require('./app/retriever');
+var db = require('./shared/db');
 
 var app = express();
 var server = http.Server(app);
@@ -35,22 +36,26 @@ app.use(session({
 }));
 
 // routes
-app.get('/', routes.home(config, bridge, retriever, messaging));
+app.get('/', routes.home(config, bridge, retriever, messaging, db));
 app.get('/authorized', routes.authorized(config, stravaApi));
 app.get('/logout', routes.logout());
 
-// comms
+// start db and comms, chaining functions together where necessary
 io.connect(server, bridge);
-messaging.start(config, bridge, function(err) {
+db.connect(config, function(err) {
   if (err) {
-    console.log('ERROR: could not connect rabbitmq server: ' + err);
-    return;
+    return console.log("ERROR: couldn't connect to db: " + err);
   }
-
-  console.log('rabbitmq connection initiated, starting http server');
-  server.listen(config.http.port, config.http.host, function() {
-    console.log('server listening on ' + config.http.host + ':' + config.http.port);
+  messaging.start(config, bridge, function(err) {
+    if (err) {
+      console.log("ERROR: couldn't start messaging: " + err);
+      db.disconnect();
+      return;
+    }
+    console.log('rabbitmq connection initiated, starting http server');
+    server.listen(config.http.port, config.http.host, function() {
+      console.log('server listening on ' + config.http.host + ':' + config.http.port);
+    });
   });
 });
-
 

@@ -1,4 +1,3 @@
-var db = require('../shared/db');
 var stravaApi = require('./stravaApi');
 
 // really these would be user specific and retrieved from the database.
@@ -16,7 +15,7 @@ var distances = [
   { id: 10, distanceInKm: 21.097494, name: "Half marathon", type: "general" },
 ];
 
-module.exports.retrieve = function(config, bridge, messaging, details) {
+module.exports.retrieve = function(config, bridge, messaging, db, details) {
   console.log('retrieving data:');
   console.log('  id:           ' + details.id);
   console.log('  guid:         ' + details.guid);

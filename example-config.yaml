@@ -12,3 +12,6 @@ strava:
 messaging:
     connectionString: amqp://guest:guest@localhost:5672
 
+db:
+  connectionString: mongodb://user:pwd@localhost:27017/run-ranker
+
