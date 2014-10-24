@@ -26,23 +26,25 @@ module.exports.disconnect = function() {
 
 // - one table for activities, that should be it, unique constraint on athlete + activity.
 
-module.exports.retrieveLatestId = function(details) {
-  // TODO: START HERE: make the whole function async and return the result!
-  collection.find({ athleteId: details.id }, { activityId: 1 }).sort({ activityId: -1 }).limit(1).toArray(function(err, results) {
+module.exports.retrieveLatestId = function(details, callback) {
+  var hackTarget = 3;
+  if (hackTarget > 1) {
+    console.log('>>>>>> TODO: REMOVE HACK TARGET <<<<<<');
+  }
+  collection.find({ athleteId: details.id }, { activityId: 1 }).sort({ activityId: -1 }).limit(hackTarget).toArray(function(err, results) {
     if (err) {
-      // TODO: what should happen here? message via bridge and abort?
-      return console.log('ERROR: ' + err);
+      console.log('ERROR: db: could not retrieve latest id: ' + err);
+      return callback(err);
     }
-    if (results.length == 0) {
-      console.log('NO RESULTS: NEED TO START AT 1!');
+    if (results.length < hackTarget) {
+      console.log('db: no activities for athlete id: ' + details.id);
+      callback(null, 0);
     }
     else {
-      console.log('RESULT: NEED TO START AT ID: ' + results[0].activityId);
+      console.log('db: athlete id: ' + details.id + ', latest activity id: ' + results[0].activityId);
+      callback(null, results[hackTarget - 1].activityId);
     }
   });
-
-  console.log('>>>> STOP THE HARD-CODED ACTIVITY ID <<<<');
-  return 209903142;
 };
 
 module.exports.retrieveActivities = function(userId) {

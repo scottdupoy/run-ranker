@@ -36,61 +36,65 @@ module.exports.retrieve = function(config, bridge, messaging, db, details) {
   //    - send message to analyser
   //    - forward high-level analysis results to client
 
-  var latestId = db.retrieveLatestId(details);
-  bridge.send(details.guid, 'log', 'retrieving acts later than ' + latestId);
-  
-  var results = stravaApi.retrieveLatestActivities(config, details.access_token, latestId, function(err, newActivities) {
+  bridge.send(details.guid, 'log', 'retrieving latest activity id for athleteId: ' + details.id);
+  db.retrieveLatestId(details, function(err, latestId) {
     if (err) {
-      console.log('ERROR: could not retrieve activities: ' + err);
-      bridge.send(details.guid, 'log', 'ERROR: could not retrieve activities: ' + err);
-      return;
+      return bridge.send(details.guid, 'log', 'ERROR: problem retrieving latest activity id for athlete ' + details.id + ' - ' + err);
     }
 
-    if (newActivities.length == 0) {
-      return bridge.send(details.guid, 'log', 'no new acts - finished.');
-    }
+    bridge.send(details.guid, 'log', 'retrieving acts later than ' + latestId);
+    var results = stravaApi.retrieveLatestActivities(config, details.access_token, latestId, function(err, newActivities) {
+      if (err) {
+        console.log('ERROR: could not retrieve activities: ' + err);
+        return bridge.send(details.guid, 'log', 'ERROR: could not retrieve activities: ' + err);
+      }
 
-    bridge.send(details.guid, 'log', 'identified ' + newActivities.length + ' new acts - processing them');
+      if (newActivities.length == 0) {
+        return bridge.send(details.guid, 'log', 'no new acts - finished.');
+      }
 
-    // process for analysis could be:
-    //  - have an _.after call to collate all the results
-    //  - foreach over each one
-    //     - https request for each individual activity
-    //     - in handler then we fire it to analyser (which may be in process for the first iteration moment)
+      bridge.send(details.guid, 'log', 'identified ' + newActivities.length + ' new acts - processing them');
 
-    // haven't really factored in db writes or where they'll happen yet. could be downstream
-    // node process picking up the analysis completion events. would be a window of re-processing
-    // race condition but risk and impact is low.
+      // process for analysis could be:
+      //  - have an _.after call to collate all the results
+      //  - foreach over each one
+      //     - https request for each individual activity
+      //     - in handler then we fire it to analyser (which may be in process for the first iteration moment)
 
-    newActivities.forEach(function(newActivity) {
-      stravaApi.retrieveActivityStream(config, details.access_token, newActivity.id, function(err, points) {
-        if (err) {
-          console.log('ERROR: could not retrieve activity stream: ' + err);
-          bridge.send(details.guid, 'log', 'ERROR: could not retrieve activity stream: ' + err);
-          // TODO: still need to call _.after completed callback on failure
-          return;
-        }
-        
-        console.log('retrieved stream data for activity: ' + newActivity.id + ' => ' + points.length + ' points => ' + newActivity.name);
-        bridge.send(details.guid, 'log', 'retrieved stream data for activity: ' + newActivity.id + ' => ' + points.length + ' points => ' + newActivity.name);
+      // haven't really factored in db writes or where they'll happen yet. could be downstream
+      // node process picking up the analysis completion events. would be a window of re-processing
+      // race condition but risk and impact is low.
 
-        // send to analyser (c++ process):
-        // TODO: result of that process calling _.after callback to coordinate all
-        //       the results at the end
-        var request = {
-          guid: details.guid,
-          athleteId: details.id,
-          activityId: newActivity.id,
-          name: newActivity.name,
-          movingTime: newActivity.moving_time,
-          elapsedTime: newActivity.elapsed_time,
-          distanceInKm: newActivity.distanceInKm,
-          startDate: newActivity.start_date,
-          distances: distances,
-          points: points,
-        };
+      newActivities.forEach(function(newActivity) {
+        stravaApi.retrieveActivityStream(config, details.access_token, newActivity.id, function(err, points) {
+          if (err) {
+            console.log('ERROR: could not retrieve activity stream: ' + err);
+            bridge.send(details.guid, 'log', 'ERROR: could not retrieve activity stream: ' + err);
+            // TODO: still need to call _.after completed callback on failure
+            return;
+          }
+          
+          console.log('retrieved stream data for activity: ' + newActivity.id + ' => ' + points.length + ' points => ' + newActivity.name);
+          bridge.send(details.guid, 'log', 'retrieved stream data for activity: ' + newActivity.id + ' => ' + points.length + ' points => ' + newActivity.name);
 
-        messaging.publishAnalysisRequest(request);
+          // send to analyser (c++ process):
+          // TODO: result of that process calling _.after callback to coordinate all
+          //       the results at the end
+          var request = {
+            guid: details.guid,
+            athleteId: details.id,
+            activityId: newActivity.id,
+            name: newActivity.name,
+            movingTime: newActivity.moving_time,
+            elapsedTime: newActivity.elapsed_time,
+            distanceInKm: newActivity.distanceInKm,
+            startDate: newActivity.start_date,
+            distances: distances,
+            points: points,
+          };
+
+          messaging.publishAnalysisRequest(request);
+        });
       });
     });
   });
