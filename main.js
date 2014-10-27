@@ -21,6 +21,13 @@ var app = express();
 var server = http.Server(app);
 var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, 'config.yaml'), 'utf8'));
 
+// TODO:
+//  - don't cache activities in a results array then process them all when we
+//    all of them, need to fire async events requesting the data to be processed
+//    at the same time.
+//  - if we hit a limit or have a problem then because activities are retrieved in reverse order
+//    then i think the latest id logic is flawed
+
 // set up app
 // TODO: (1) handling logging properly, (2) handle errors properly
 app.set('view engine', 'ejs');

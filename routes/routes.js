@@ -3,6 +3,7 @@ exports.home = function(config, bridge, retriever, messaging, db) {
     var ip = getClientIp(req);
     if (req.session == null || req.session.access_token == null) {
       console.log('home: source ip: ' + ip);
+      console.log('user-agent: ' + req.headers['user-agent']);
       return res.render('home', { clientId: config.strava.clientId });
     }
 

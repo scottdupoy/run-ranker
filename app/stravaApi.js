@@ -1,5 +1,5 @@
 var https = require('https');
-var perPage = 25;
+var perPage = 200;
 
 module.exports.getAccessToken = function(config, code, callback) {
   var path = '/oauth/token?client_id=' + config.strava.clientId + '&client_secret=' + config.strava.clientSecret + '&code=' + code;
@@ -67,6 +67,7 @@ function retrieveActivitiesPage(config, accessToken, latestId, page, results, ca
         retrieveActivitiesPage(config, accessToken, latestId, page + 1, results, callback);
       }
       else {
+        // TODO: by caching the results in an array it means that no results are processed until all of the results are in.
         callback(null, results);
       }
     });

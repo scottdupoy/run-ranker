@@ -27,7 +27,7 @@ module.exports.disconnect = function() {
 // - one table for activities, that should be it, unique constraint on athlete + activity.
 
 module.exports.retrieveLatestId = function(details, callback) {
-  var hackTarget = 3;
+  var hackTarget = 1;
   if (hackTarget > 1) {
     console.log('>>>>>> TODO: REMOVE HACK TARGET <<<<<<');
   }
@@ -38,6 +38,7 @@ module.exports.retrieveLatestId = function(details, callback) {
     }
     if (results.length < hackTarget) {
       console.log('db: no activities for athlete id: ' + details.id);
+      //callback(null, 205190000);
       callback(null, 0);
     }
     else {
@@ -76,5 +77,9 @@ module.exports.insertActivity = function(activity) {
       console.log('activity saved: recordsModified: ' + recordsModified + ', status: ' + JSON.stringify(status));
     }
   });
+};
+
+module.exports.deleteAllActivities = function(athleteId, callback) {
+  collection.remove({ athleteId: athleteId }, callback);
 };
 
