@@ -51,9 +51,9 @@ module.exports.start = function(config, bridge, callback) {
   var subscriber = function(result) {
     console.log('analysis result: ' + result.guid);
     bridge.send(result.guid, 'log', 'analysis completed: ' + result.name + ' - ' + result.guid);
-    result.bestEfforts.forEach(function(bestEffort) {
-      bridge.send(result.guid, 'log', '  ' + bestEffort.distance.name + ' = ' + bestEffort.effort.duration);
-    });
+    //result.bestEfforts.forEach(function(bestEffort) {
+    //  bridge.send(result.guid, 'log', '  ' + bestEffort.distance.name + ' = ' + bestEffort.effort.duration);
+    //});
   };
 
   connection.on('ready', createExchange);

@@ -12,7 +12,7 @@ exports.home = function(config, bridge, retriever, messaging, db) {
     console.log('landing: source ip: ' + ip + ' => ' + req.session.athlete_firstname + ' ' + req.session.athlete_lastname + ' - ' + guid);
 
     res.render('landing', {
-      access_token: req.session.access_token,
+      //access_token: req.session.access_token,
       id: req.session.athlete_id,
       firstname: req.session.athlete_firstname,
       lastname: req.session.athlete_lastname,

@@ -24,10 +24,10 @@ module.exports.disconnect = function() {
   }
 }
 
-// - one table for activities, that should be it, unique constraint on athlete + activity.
+// - one table for activities, that should be it, (TODO) unique constraint on athlete + activity.
 
 module.exports.retrieveLatestId = function(details, callback) {
-  var hackTarget = 1;
+  var hackTarget = 5;
   if (hackTarget > 1) {
     console.log('>>>>>> TODO: REMOVE HACK TARGET <<<<<<');
   }
