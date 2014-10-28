@@ -27,6 +27,9 @@ var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, 'config.yaml'), 
 //    at the same time.
 //  - if we hit a limit or have a problem then because activities are retrieved in reverse order
 //    then i think the latest id logic is flawed
+//  - add mediator object described in app/retriever.js
+//  - store high-level details of manually entered runs. want monthly totals.
+//  - how will we detect if a user deletes an activity?...
 
 // set up app
 // TODO: (1) handling logging properly, (2) handle errors properly

@@ -22,19 +22,18 @@ module.exports.retrieve = function(config, bridge, messaging, db, details) {
   console.log('  access_token: ' + details.access_token);
   bridge.send(details.guid, 'log', 'checking for new data');
 
-  // - LATER: check db for user
-  //    - LATER: if not there then add
-
   // - LATER: check db for acts (for now stub out and issue a last retrieved act id)
-  //    - LATER: immediately return the results that we know about. on ui provide a dialogue 
-  //             and option to close it and review the data that's already there
+  // - LATER: immediately return the results that we know about. on ui provide a dialogue 
+  //          and option to close it and review the data that's already there
 
-  // - check api for acts summary
-
-  // - foreach new act
-  //    - retrieve data points
-  //    - send message to analyser
-  //    - forward high-level analysis results to client
+  // need some mediating object on athleteId
+  //  - will need to know if a check was made recently
+  //  - will need to know if activity analyses are pending
+  //  - will need to bring pending results back together and notify the ui
+  //  - will need to notify ui when all pending results are in and pull everything back together
+  //  - will need to harmonise multiple browser sessions for the same athlete (will the access tokens conflict? - prob not)
+  // for now am just firing and forgetting the analysis requests. the bridge still delivers to the ui session
+  // but doesn't know how many results its expecting.
 
   bridge.send(details.guid, 'log', 'retrieving latest activity id for athleteId: ' + details.id);
   db.retrieveLatestId(details, function(err, latestId) {
@@ -43,58 +42,47 @@ module.exports.retrieve = function(config, bridge, messaging, db, details) {
     }
 
     bridge.send(details.guid, 'log', 'retrieving acts later than ' + latestId);
-    var results = stravaApi.retrieveLatestActivities(config, details.access_token, latestId, function(err, newActivities) {
+
+    var results = stravaApi.retrieveLatestActivities(config, details.access_token, latestId, function(err, newActivity) {
       if (err) {
-        console.log('ERROR: could not retrieve activities: ' + err);
+        console.log('ERROR: problem retrieving activities: ' + err);
         return bridge.send(details.guid, 'log', 'ERROR: could not retrieve activities: ' + err);
       }
 
-      if (newActivities.length == 0) {
-        return bridge.send(details.guid, 'log', 'no new acts - finished.');
-      }
+      // TODO: notify mediator that there is a new activity
 
-      bridge.send(details.guid, 'log', 'identified ' + newActivities.length + ' new acts - processing them');
+      // leaving this commented as a reminder that a mechanism is needed to indicate all results have been
+      // identified and so just need to wait for any [remaining] pending results to come in.
+      //if (newActivities.length == 0) {
+      //  return bridge.send(details.guid, 'log', 'no new acts - finished.');
+      //}
 
-      // process for analysis could be:
-      //  - have an _.after call to collate all the results
-      //  - foreach over each one
-      //     - https request for each individual activity
-      //     - in handler then we fire it to analyser (which may be in process for the first iteration moment)
+      stravaApi.retrieveActivityStream(config, details.access_token, newActivity.id, function(err, points) {
+        if (err) {
+          // TODO: still need to mark an activity as not pending any more
+          console.log('ERROR: could not retrieve activity stream: ' + err);
+          bridge.send(details.guid, 'log', 'ERROR: could not retrieve activity stream: ' + err);
+          return;
+        }
+        
+        console.log('retrieved stream data for activity: ' + newActivity.id + ' => ' + points.length + ' points => ' + newActivity.name);
+        bridge.send(details.guid, 'log', 'retrieved stream data for activity: ' + newActivity.id + ' => ' + points.length + ' points => ' + newActivity.name);
 
-      // haven't really factored in db writes or where they'll happen yet. could be downstream
-      // node process picking up the analysis completion events. would be a window of re-processing
-      // race condition but risk and impact is low.
+        // send to analyser (separate c++ process):
+        var request = {
+          guid: details.guid,
+          athleteId: details.id,
+          activityId: newActivity.id,
+          name: newActivity.name,
+          movingTime: newActivity.moving_time,
+          elapsedTime: newActivity.elapsed_time,
+          distanceInKm: newActivity.distanceInKm,
+          startDate: newActivity.start_date,
+          distances: distances,
+          points: points,
+        };
 
-      newActivities.forEach(function(newActivity) {
-        stravaApi.retrieveActivityStream(config, details.access_token, newActivity.id, function(err, points) {
-          if (err) {
-            console.log('ERROR: could not retrieve activity stream: ' + err);
-            bridge.send(details.guid, 'log', 'ERROR: could not retrieve activity stream: ' + err);
-            // TODO: still need to call _.after completed callback on failure
-            return;
-          }
-          
-          console.log('retrieved stream data for activity: ' + newActivity.id + ' => ' + points.length + ' points => ' + newActivity.name);
-          bridge.send(details.guid, 'log', 'retrieved stream data for activity: ' + newActivity.id + ' => ' + points.length + ' points => ' + newActivity.name);
-
-          // send to analyser (c++ process):
-          // TODO: result of that process calling _.after callback to coordinate all
-          //       the results at the end
-          var request = {
-            guid: details.guid,
-            athleteId: details.id,
-            activityId: newActivity.id,
-            name: newActivity.name,
-            movingTime: newActivity.moving_time,
-            elapsedTime: newActivity.elapsed_time,
-            distanceInKm: newActivity.distanceInKm,
-            startDate: newActivity.start_date,
-            distances: distances,
-            points: points,
-          };
-
-          messaging.publishAnalysisRequest(request);
-        });
+        messaging.publishAnalysisRequest(request);
       });
     });
   });

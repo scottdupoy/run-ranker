@@ -25,10 +25,10 @@ module.exports.getAccessToken = function(config, code, callback) {
 };
 
 module.exports.retrieveLatestActivities = function(config, accessToken, latestId, callback) {
-  retrieveActivitiesPage(config, accessToken, latestId, 1, [ ], callback);
+  retrieveActivitiesPage(config, accessToken, latestId, 1, callback);
 };
 
-function retrieveActivitiesPage(config, accessToken, latestId, page, results, callback) {
+function retrieveActivitiesPage(config, accessToken, latestId, page, callback) {
   console.log('retrieving activities page ' + page);
   var options = {
     host: 'www.strava.com',
@@ -46,6 +46,8 @@ function retrieveActivitiesPage(config, accessToken, latestId, page, results, ca
       var anyActivitiesAfterLatestId = false;
       activities.forEach(function (activity) {
         anyActivitiesAfterLatestId |= activity.id > latestId;
+        // TODO: send new gps (and manual) activities to the mediator
+        console.log('TODO: send new gps (and manual) activities to the mediator');
         if (activity.type == "Run"
           && activity.id > latestId
           && !activity.trainer
@@ -53,7 +55,7 @@ function retrieveActivitiesPage(config, accessToken, latestId, page, results, ca
           && !activity.flagged
           && !activity.private) {
           console.log('  new run:      ' + activity.id + ' => ' + activity.name);
-          results.push({
+          callback(null, {
             id: activity.id,
             name: activity.name,
             distanceInKm: activity.distance / 1000.0,
@@ -63,12 +65,17 @@ function retrieveActivitiesPage(config, accessToken, latestId, page, results, ca
           });
         }
       });
+
+      // TODO: consider removing this newActivitiesAfterLatestId check to ensure we pick up 
+      //       all activities after a crash or api limit hit. could also pick up activity
+      //       deletes. Q: is there a maximum value for per_page? if not then go big! :)
       if (anyActivitiesAfterLatestId) {
-        retrieveActivitiesPage(config, accessToken, latestId, page + 1, results, callback);
+        retrieveActivitiesPage(config, accessToken, latestId, page + 1, callback);
       }
       else {
-        // TODO: by caching the results in an array it means that no results are processed until all of the results are in.
-        callback(null, results);
+        // TODO: do we call another callback or the mediator to let it know that all 
+        // pending requests will have been started now?
+        console.log('TODO: all pending requests have been initiated');
       }
     });
   })
