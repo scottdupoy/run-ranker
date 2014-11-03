@@ -1,8 +1,12 @@
 var https = require('https');
-var perPage = 200;
+var perPage = 5;
 
-module.exports.getAccessToken = function(config, code, callback) {
-  var path = '/oauth/token?client_id=' + config.strava.clientId + '&client_secret=' + config.strava.clientSecret + '&code=' + code;
+function StravaApi(config) {
+  this.config = config;
+}
+
+StravaApi.prototype.getAccessToken = function(code, callback) {
+  var path = '/oauth/token?client_id=' + this.config.strava.clientId + '&client_secret=' + this.config.strava.clientSecret + '&code=' + code;
   var accessTokenRequest = https.request({
     host: 'www.strava.com',
     port: 443,
@@ -24,11 +28,11 @@ module.exports.getAccessToken = function(config, code, callback) {
   .end();
 };
 
-module.exports.retrieveLatestActivities = function(config, accessToken, latestId, callback) {
-  retrieveActivitiesPage(config, accessToken, latestId, 1, callback);
+StravaApi.prototype.retrieveActivities = function(accessToken, callback, completedCallback) {
+  retrieveActivitiesPage(accessToken, 1, callback, completedCallback);
 };
 
-function retrieveActivitiesPage(config, accessToken, latestId, page, callback) {
+function retrieveActivitiesPage(accessToken, page, callback, completedCallback) {
   console.log('retrieving activities page ' + page);
   var options = {
     host: 'www.strava.com',
@@ -42,14 +46,13 @@ function retrieveActivitiesPage(config, accessToken, latestId, page, callback) {
       data += chunk;
     })
     response.on('end', function() {
+      console.log('TODO: stravaApi: don\'t do much filtering here, let the controller do it...');
       var activities = JSON.parse(data);
-      var anyActivitiesAfterLatestId = false;
       activities.forEach(function (activity) {
-        anyActivitiesAfterLatestId |= activity.id > latestId;
         // TODO: send new gps (and manual) activities to the mediator
-        console.log('TODO: send new gps (and manual) activities to the mediator');
+        // TODO: less filtering here
+        //console.log('TODO: send new gps (and manual) activities to the mediator');
         if (activity.type == "Run"
-          && activity.id > latestId
           && !activity.trainer
           && !activity.manual
           && !activity.flagged
@@ -66,16 +69,17 @@ function retrieveActivitiesPage(config, accessToken, latestId, page, callback) {
         }
       });
 
-      // TODO: consider removing this newActivitiesAfterLatestId check to ensure we pick up 
-      //       all activities after a crash or api limit hit. could also pick up activity
-      //       deletes. Q: is there a maximum value for per_page? if not then go big! :)
-      if (anyActivitiesAfterLatestId) {
-        retrieveActivitiesPage(config, accessToken, latestId, page + 1, callback);
+      // stop if there are less than the perPage amount of activities
+      console.log('retrieved ' + activities.length + ' / ' + perPage + ' results');
+      if (activities.length < perPage) {
+        console.log('TODO: retrieving next page');
+        //retrieveActivitiesPage(accessToken, latestId, page + 1, callback);
+        // TODO: delete this and uncomment the above
+        completedCallback();
       }
       else {
-        // TODO: do we call another callback or the mediator to let it know that all 
-        // pending requests will have been started now?
-        console.log('TODO: all pending requests have been initiated');
+        console.log('calling completedCallback');
+        completedCallback();
       }
     });
   })
@@ -85,7 +89,7 @@ function retrieveActivitiesPage(config, accessToken, latestId, page, callback) {
   .end();
 };
 
-module.exports.retrieveActivityStream = function(config, accessToken, activityId, callback) {
+StravaApi.prototype.retrieveActivityStream = function(accessToken, activityId, callback) {
   // note: stream call could also request things like heartrate, temp, grade_smooth, etc
   https.request({
     host: 'www.strava.com',
@@ -153,4 +157,6 @@ function handleStreams(streams, callback) {
 
   callback(null, results);
 }
+
+module.exports = StravaApi;
 

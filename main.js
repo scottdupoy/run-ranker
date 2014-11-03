@@ -8,20 +8,29 @@ var favicon = require('serve-favicon');
 var yaml = require('js-yaml');
 var fs = require('fs');
 
-// TODO: add some kind of construction layer to stop having to pass objects through method calls
-var routes = require('./routes/routes');
-var bridge = require('./app/bridge');
-var io = require('./app/sockets');
-var messaging = require('./app/messaging');
-var stravaApi = require('./app/stravaApi');
-var retriever = require('./app/retriever');
+var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, 'config.yaml'), 'utf8'));
+
+// using prototypes, order is important
+var bridge = new (require('./app/bridge'))();
+var stravaApi = new (require('./app/stravaApi'))(config);
+var controller = new (require('./app/controller'))(bridge);
+var routes = new (require('./routes/routes'))(config, controller, stravaApi);
+var io = new (require('./app/sockets'))(bridge);
+var messaging = new (require('./app/messaging'))(config, controller);
+var retriever = new (require('./app/retriever'))(stravaApi, messaging, controller);
+
+// hook up the final (cyclical) dependencies
+controller.set(retriever);
+
+// TODO:
 var db = require('./shared/db');
 
 var app = express();
 var server = http.Server(app);
-var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, 'config.yaml'), 'utf8'));
 
 // TODO:
+//  - kick of the retrieval as soon as we have authorization
+//  - use controller as "mediator"
 //  - don't cache activities in a results array then process them all when we
 //    all of them, need to fire async events requesting the data to be processed
 //    at the same time.
@@ -30,6 +39,11 @@ var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, 'config.yaml'), 
 //  - add mediator object described in app/retriever.js
 //  - store high-level details of manually entered runs. want monthly totals.
 //  - how will we detect if a user deletes an activity?...
+//  - stop passing guid around. athleteId should be the root key for everything. guid is just for
+//    proxying to websocket(s).
+//  - could speed things up a little by retrieving full details for all activities after the latest id
+//    (currently planing on waiting until we have the full list of what we need - could take a while
+//    unless it's possible to do a very large activity list retrieval...)
 
 // set up app
 // TODO: (1) handling logging properly, (2) handle errors properly
@@ -45,18 +59,18 @@ app.use(session({
   saveUninitialized: true,
 }));
 
-// routes
-app.get('/', routes.home(config, bridge, retriever, messaging, db));
-app.get('/authorized', routes.authorized(config, stravaApi));
-app.get('/logout', routes.logout());
+// routes (could simplify this code by using a 'that' handle onto 'this' in the route functions)
+app.get('/', function(req, res) { routes.home(req, res); });
+app.get('/authorized', function(req, res) { routes.authorized(req, res); });
+app.get('/logout', function(req, res) { routes.logout(req, res); });
 
 // start db and comms, chaining functions together where necessary
-io.connect(server, bridge);
+io.connect(server);
 db.connect(config, function(err) {
   if (err) {
     return console.log("ERROR: couldn't connect to db: " + err);
   }
-  messaging.start(config, bridge, function(err) {
+  messaging.start(function(err) {
     if (err) {
       console.log("ERROR: couldn't start messaging: " + err);
       db.disconnect();

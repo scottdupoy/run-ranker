@@ -1,45 +1,109 @@
-var map = { };
 
-module.exports.connect = function() {
+function Bridge() {
+  // need a map to find the athleteIds when disconnecting
+  this.guidMap = { };
+
+  // need a map from athleteId to guids to sockets
+  this.socketMap = { };
+}
+
+Bridge.prototype.connect = function(athleteId) {
+  // add the guid and a link back to the athleteId
   var guid = generateGuid();
-  map[guid] = {
+  console.log('bridge: adding guid mapping for athleteId: ' + athleteId + ', guid: ' + guid);
+  this.guidMap[guid] = athleteId;
+
+  // see if there is already an open connection for this athleteId
+  if (!(athleteId in this.socketMap)) {
+    // no sockets for this athleteId so create an empty entry in the socketMap
+    console.log('bridge: adding socket mapping for athleteId: ' + athleteId);
+    this.socketMap[athleteId] = { };
+  }
+  var mappings = this.socketMap[athleteId];
+
+  // add the new guid and a queue to hold any messages that should be sent
+  // before the client socket actually connects
+  mappings[guid] = {
     socket: null,
-    queue: [ ],
+    queue: [ ]
   };
+
   return guid;
 };
 
-module.exports.disconnect = function(guid) {
-  if (guid in map) {
-    delete map[guid];
+Bridge.prototype.disconnect = function(guid) {
+  if (!(guid in this.guidMap)) {
+    return;
+  }
+
+  var athleteId = this.guidMap[guid];
+  console.log('bridge: removing guid lookup: ' + guid);
+  delete this.guidMap[guid];
+
+  if (!(athleteId in this.socketMap)) {
+    return;
+  }
+
+  var mappings = this.socketMap[athleteId];
+  if (guid in mappings) {
+    console.log('bridge: removing athleteId ' + athleteId + ' guid ' + guid);
+    delete mappings[guid];
   }
 };
 
-module.exports.send = function(guid, key, message) {
-  if (!(guid in map)) {
+Bridge.prototype.send = function(athleteId, key, message) {
+  if (!(athleteId in this.socketMap)) {
     return;
   }
-  var wrapper = map[guid];
-  if (wrapper.socket == null) {
-    wrapper.queue.push({ key: key, message: message });
-    return;
+
+  // find mappings then iterate over them, sending or queueing for each
+  var mappings = this.socketMap[athleteId];
+  for (var guid in mappings) {
+    // check it's a key and not a prototype property
+    if (!mappings.hasOwnProperty(guid)) {
+      continue;
+    }
+
+    var mapping = mappings[guid];
+    if (mapping.socket == null) {
+      mapping.queue.push({ key: key, message: message });
+    }
+    else {
+      mapping.socket.emit(key, message);
+    }
   }
-  wrapper.socket.emit(key, message);
 };
 
-module.exports.setSocket = function(guid, socket) {
-  if (!guid in map) {
+Bridge.prototype.setSocket = function(guid, socket) {
+  // find the corresponding athleteId
+  if (!(guid in this.guidMap)) {
+    console.log('WARN: unexpected missing athleteId for guid: ' + guid);
     return;
   }
+  var athleteId = this.guidMap[guid];
 
-  var wrapper = map[guid];
-  wrapper.socket = socket;
+  if (!(athleteId in this.socketMap)) {
+    console.log('WARN: unexpected missing athleteId in socketMap: ' + athleteId + ' (adding it)');
+    this.socketMap[athleteId] = { };
+  }
+  var mappings = this.socketMap[athleteId];
+
+  if (!(guid in mappings)) {
+    console.log('WARN: unexpected missing mapping for guid ' + guid + ' for athleteId ' + athleteId + ' (adding it)');
+    mappings[guid] = {
+      socket: null,
+      queue: [ ],
+    };
+  }
+
+  var mapping = mappings[guid];
+  mapping.socket = socket;
 
   // flush any cached messages
-  wrapper.queue.forEach(function(message) {
+  mapping.queue.forEach(function(message) {
     socket.emit(message.key, message.message);
   });
-  wrapper.queue = [ ];
+  mapping.queue = [ ];
 };
 
 function generateGuid() {
@@ -49,4 +113,6 @@ function generateGuid() {
     return v.toString(16);
   });
 }
+
+module.exports = Bridge;
 

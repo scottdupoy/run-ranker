@@ -1,4 +1,3 @@
-var stravaApi = require('./stravaApi');
 
 // really these would be user specific and retrieved from the database.
 // there would probably be less than this amount.
@@ -15,12 +14,17 @@ var distances = [
   { id: 10, distanceInKm: 21.097494, name: "Half marathon", type: "general" },
 ];
 
-module.exports.retrieve = function(config, bridge, messaging, db, details) {
+function Retriever(stravaApi, messaging, controller) {
+  this.stravaApi = stravaApi;
+  this.messaging = messaging;
+  this.controller = controller;
+}
+
+Retriever.prototype.retrieve = function(details) {
   console.log('retrieving data:');
-  console.log('  id:           ' + details.id);
-  console.log('  guid:         ' + details.guid);
-  console.log('  access_token: ' + details.access_token);
-  bridge.send(details.guid, 'log', 'checking for new data');
+  console.log('  guid:        ' + details.guid);
+  console.log('  athleteId:   ' + details.athleteId);
+  console.log('  accessToken: ' + details.accessToken);
 
   // - LATER: check db for acts (for now stub out and issue a last retrieved act id)
   // - LATER: immediately return the results that we know about. on ui provide a dialogue 
@@ -35,56 +39,52 @@ module.exports.retrieve = function(config, bridge, messaging, db, details) {
   // for now am just firing and forgetting the analysis requests. the bridge still delivers to the ui session
   // but doesn't know how many results its expecting.
 
-  bridge.send(details.guid, 'log', 'retrieving latest activity id for athleteId: ' + details.id);
-  db.retrieveLatestId(details, function(err, latestId) {
+  var that = this;
+  
+  var newActivityCallback = function(err, newActivity) {
     if (err) {
-      return bridge.send(details.guid, 'log', 'ERROR: problem retrieving latest activity id for athlete ' + details.id + ' - ' + err);
+      return that.controller.handleRetrieveActivitiesError(details.athleteId, err);
     }
 
-    bridge.send(details.guid, 'log', 'retrieving acts later than ' + latestId);
+    // pass the new activity back to the controller
+    newActivity.athleteId = details.athleteId;
+    that.controller.handleNewActivity(newActivity);
 
-    var results = stravaApi.retrieveLatestActivities(config, details.access_token, latestId, function(err, newActivity) {
+    // TODO: conditionalise this so we can handle manual activities
+    console.log('TODO: retriever: conditionalise stream retrievals for gps activities only');
+
+    that.stravaApi.retrieveActivityStream(details.accessToken, newActivity.id, function(err, points) {
       if (err) {
-        console.log('ERROR: problem retrieving activities: ' + err);
-        return bridge.send(details.guid, 'log', 'ERROR: could not retrieve activities: ' + err);
+        return that.controller.handleRetrieveActivityStreamError(details.athleteId, err);
       }
+      
+      // just a state update
+      that.controller.handleNewActivityStream(details.athleteId, newActivity.id);
 
-      // TODO: notify mediator that there is a new activity
+      // send to analyser (separate c++ process):
+      var request = {
+        guid: details.guid,
+        athleteId: details.athleteId,
+        activityId: newActivity.id,
+        name: newActivity.name,
+        movingTime: newActivity.moving_time,
+        elapsedTime: newActivity.elapsed_time,
+        distanceInKm: newActivity.distanceInKm,
+        startDate: newActivity.start_date,
+        distances: distances,
+        points: points,
+      };
 
-      // leaving this commented as a reminder that a mechanism is needed to indicate all results have been
-      // identified and so just need to wait for any [remaining] pending results to come in.
-      //if (newActivities.length == 0) {
-      //  return bridge.send(details.guid, 'log', 'no new acts - finished.');
-      //}
-
-      stravaApi.retrieveActivityStream(config, details.access_token, newActivity.id, function(err, points) {
-        if (err) {
-          // TODO: still need to mark an activity as not pending any more
-          console.log('ERROR: could not retrieve activity stream: ' + err);
-          bridge.send(details.guid, 'log', 'ERROR: could not retrieve activity stream: ' + err);
-          return;
-        }
-        
-        console.log('retrieved stream data for activity: ' + newActivity.id + ' => ' + points.length + ' points => ' + newActivity.name);
-        bridge.send(details.guid, 'log', 'retrieved stream data for activity: ' + newActivity.id + ' => ' + points.length + ' points => ' + newActivity.name);
-
-        // send to analyser (separate c++ process):
-        var request = {
-          guid: details.guid,
-          athleteId: details.id,
-          activityId: newActivity.id,
-          name: newActivity.name,
-          movingTime: newActivity.moving_time,
-          elapsedTime: newActivity.elapsed_time,
-          distanceInKm: newActivity.distanceInKm,
-          startDate: newActivity.start_date,
-          distances: distances,
-          points: points,
-        };
-
-        messaging.publishAnalysisRequest(request);
-      });
+      that.messaging.publishAnalysisRequest(request);
     });
-  });
+  };
+
+  var retrieveActivitiesCompletedCallback = function() {
+    that.controller.handleAllNewActivitiesIdentified(details.athleteId);
+  };
+
+  this.stravaApi.retrieveActivities(details.accessToken, newActivityCallback, retrieveActivitiesCompletedCallback);
 };
+
+module.exports = Retriever;
 
