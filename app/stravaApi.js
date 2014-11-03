@@ -28,11 +28,11 @@ StravaApi.prototype.getAccessToken = function(code, callback) {
   .end();
 };
 
-StravaApi.prototype.retrieveActivities = function(accessToken, callback, completedCallback) {
-  retrieveActivitiesPage(accessToken, 1, callback, completedCallback);
+StravaApi.prototype.retrieveActivities = function(accessToken, latestId, callback, completedCallback) {
+  retrieveActivitiesPage(accessToken, latestId, 1, callback, completedCallback);
 };
 
-function retrieveActivitiesPage(accessToken, page, callback, completedCallback) {
+function retrieveActivitiesPage(accessToken, latestId, page, callback, completedCallback) {
   console.log('retrieving activities page ' + page);
   var options = {
     host: 'www.strava.com',
@@ -47,12 +47,16 @@ function retrieveActivitiesPage(accessToken, page, callback, completedCallback) 
     })
     response.on('end', function() {
       console.log('TODO: stravaApi: don\'t do much filtering here, let the controller do it...');
+      console.log('TODO: stravaApi: add full re-retrieval / check');
       var activities = JSON.parse(data);
+      var newActivityRetrieved = false;
       activities.forEach(function (activity) {
         // TODO: send new gps (and manual) activities to the mediator
         // TODO: less filtering here
         //console.log('TODO: send new gps (and manual) activities to the mediator');
+        newActivityRetrieved |= (activity.id > latestId);
         if (activity.type == "Run"
+          && activity.id > latestId
           && !activity.trainer
           && !activity.manual
           && !activity.flagged
@@ -70,15 +74,14 @@ function retrieveActivitiesPage(accessToken, page, callback, completedCallback) 
       });
 
       // stop if there are less than the perPage amount of activities
-      console.log('retrieved ' + activities.length + ' / ' + perPage + ' results');
-      if (activities.length < perPage) {
-        console.log('TODO: retrieving next page');
-        //retrieveActivitiesPage(accessToken, latestId, page + 1, callback);
-        // TODO: delete this and uncomment the above
-        completedCallback();
+      console.log('stravaApi: retrieved ' + activities.length + ' / ' + perPage + ' results');
+      if (newActivityRetrieved) {
+        console.log('stravaApi: retrieving next page');
+        retrieveActivitiesPage(accessToken, latestId, page + 1, callback);
       }
-      else {
-        console.log('calling completedCallback');
+
+      if (activities.length < perPage) {
+        console.log('stravaApi: calling completedCallback');
         completedCallback();
       }
     });

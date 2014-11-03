@@ -1,59 +1,64 @@
 var mongodb = require('mongodb').MongoClient;
 
-var db = null;
-var collection;
+function Db(config) {
+  this.config = config;
+  this.db = null;
+  this.collection = null;
+}
 
-module.exports.connect = function(config, callback) {
-  console.log('connecting to db: ' + config.db.connectionString);
-  mongodb.connect(config.db.connectionString, function(err, newConnection) {
+Db.prototype.connect = function(callback) {
+  console.log('connecting to db: ' + this.config.db.connectionString);
+  var that = this;
+  mongodb.connect(this.config.db.connectionString, function(err, newConnection) {
     if (err) {
       return callback(err);
     }
     console.log('connected to db');
-    db = newConnection;
-    collection = db.collection('activities');
+    that.db = newConnection;
+    that.collection = that.db.collection('activities');
     callback();
   });
 }
 
-module.exports.disconnect = function() {
-  if (db != null) {
+Db.prototype.disconnect = function() {
+  if (this.db != null) {
     console.log('closing db connection');
-    db.close();
-    db = null;
+    this.db.close();
+    this.db = null;
   }
 }
 
-// - one table for activities, that should be it, (TODO) unique constraint on athlete + activity.
+// - one table for activities - TODO: unique constraint on athlete + activity.
+// - will need another table on user preferences (units, distances, net descents, etc)
 
-module.exports.retrieveLatestId = function(details, callback) {
-  var hackTarget = 5;
+Db.prototype.retrieveLatestActivityId = function(athleteId, callback) {
+  var hackTarget = 3;
   if (hackTarget > 1) {
     console.log('>>>>>> TODO: REMOVE HACK TARGET <<<<<<');
   }
-  collection.find({ athleteId: details.id }, { activityId: 1 }).sort({ activityId: -1 }).limit(hackTarget).toArray(function(err, results) {
+  this.collection.find({ athleteId: athleteId }, { activityId: 1 }).sort({ activityId: -1 }).limit(hackTarget).toArray(function(err, results) {
     if (err) {
       console.log('ERROR: db: could not retrieve latest id: ' + err);
       return callback(err);
     }
     if (results.length < hackTarget) {
-      console.log('db: no activities for athlete id: ' + details.id);
-      //callback(null, 205190000);
+      // trigger a full reload
+      console.log('db: no activities for athlete id: ' + athleteId);
       callback(null, 0);
     }
     else {
-      console.log('db: athlete id: ' + details.id + ', latest activity id: ' + results[0].activityId);
+      console.log('db: athlete id: ' + athleteId + ', latest activity id: ' + results[0].activityId);
       callback(null, results[hackTarget - 1].activityId);
     }
   });
 };
 
-module.exports.retrieveActivities = function(userId) {
-  // TODO: return any cached results, for now assuming none
+Db.prototype.retrieveActivities = function(userId) {
+  // TODO: return all db results (cache will already have been checked)
   return [ ];
 };
 
-module.exports.insertActivity = function(activity) {
+Db.prototype.insertActivity = function(activity) {
   console.log('inserting activity: athleteId: ' + activity.athleteId + ', activityId: ' + activity.activityId + ', name: ' + activity.name);
 
   key = {
@@ -69,7 +74,7 @@ module.exports.insertActivity = function(activity) {
     upsert: true,
   };
 
-  collection.update(key, data, options, function(err, recordsModified, status) {
+  this.collection.update(key, data, options, function(err, recordsModified, status) {
     if (err) {
       console.log('ERROR: problem saving activity: ' + err);
     }
@@ -79,7 +84,8 @@ module.exports.insertActivity = function(activity) {
   });
 };
 
-module.exports.deleteAllActivities = function(athleteId, callback) {
-  collection.remove({ athleteId: athleteId }, callback);
+Db.prototype.deleteAllActivities = function(athleteId, callback) {
+  this.collection.remove({ athleteId: athleteId }, callback);
 };
 
+module.exports = Db;

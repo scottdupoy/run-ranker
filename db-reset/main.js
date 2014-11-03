@@ -10,12 +10,11 @@ if (process.argv.length < 3 || isNaN(process.argv[2])) {
 var athleteId = +process.argv[2];
 console.log('deleting all activities for athlete: ' + athleteId);
 
-
-var db = require('../shared/db');
 var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, '..', 'config.yaml'), 'utf8'));
+var db = new (require('../shared/db'))(config);
 
 // whole service is driven by comms
-db.connect(config, function(err) {
+db.connect(function(err) {
   if (err) {
     console.log("ERROR: couldn't connect to the db: " + err);
     return;

@@ -11,9 +11,10 @@ var fs = require('fs');
 var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, 'config.yaml'), 'utf8'));
 
 // using prototypes, order is important
+var db = new (require('./shared/db'))(config);
 var bridge = new (require('./app/bridge'))();
 var stravaApi = new (require('./app/stravaApi'))(config);
-var controller = new (require('./app/controller'))(bridge);
+var controller = new (require('./app/controller'))(bridge, db);
 var routes = new (require('./routes/routes'))(config, controller, stravaApi);
 var io = new (require('./app/sockets'))(bridge);
 var messaging = new (require('./app/messaging'))(config, controller);
@@ -22,31 +23,25 @@ var retriever = new (require('./app/retriever'))(stravaApi, messaging, controlle
 // hook up the final (cyclical) dependencies
 controller.set(retriever);
 
-// TODO:
-var db = require('./shared/db');
-
+// web server setup
 var app = express();
 var server = http.Server(app);
 
 // TODO:
-//  - kick of the retrieval as soon as we have authorization
-//  - use controller as "mediator"
 //  - don't cache activities in a results array then process them all when we
 //    all of them, need to fire async events requesting the data to be processed
 //    at the same time.
 //  - if we hit a limit or have a problem then because activities are retrieved in reverse order
 //    then i think the latest id logic is flawed
-//  - add mediator object described in app/retriever.js
 //  - store high-level details of manually entered runs. want monthly totals.
-//  - how will we detect if a user deletes an activity?...
-//  - stop passing guid around. athleteId should be the root key for everything. guid is just for
-//    proxying to websocket(s).
+//  - how will we detect if a user deletes an activity?... (wait for full refresh)
 //  - could speed things up a little by retrieving full details for all activities after the latest id
 //    (currently planing on waiting until we have the full list of what we need - could take a while
 //    unless it's possible to do a very large activity list retrieval...)
+//  - handle logging properly
+//  - handle errors properly
 
 // set up app
-// TODO: (1) handling logging properly, (2) handle errors properly
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -66,7 +61,7 @@ app.get('/logout', function(req, res) { routes.logout(req, res); });
 
 // start db and comms, chaining functions together where necessary
 io.connect(server);
-db.connect(config, function(err) {
+db.connect(function(err) {
   if (err) {
     return console.log("ERROR: couldn't connect to db: " + err);
   }

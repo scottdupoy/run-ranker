@@ -1,4 +1,3 @@
-
 // really these would be user specific and retrieved from the database.
 // there would probably be less than this amount.
 var distances = [
@@ -20,7 +19,7 @@ function Retriever(stravaApi, messaging, controller) {
   this.controller = controller;
 }
 
-Retriever.prototype.retrieve = function(details) {
+Retriever.prototype.retrieve = function(details, latestId) {
   console.log('retrieving data:');
   console.log('  guid:        ' + details.guid);
   console.log('  athleteId:   ' + details.athleteId);
@@ -83,7 +82,7 @@ Retriever.prototype.retrieve = function(details) {
     that.controller.handleAllNewActivitiesIdentified(details.athleteId);
   };
 
-  this.stravaApi.retrieveActivities(details.accessToken, newActivityCallback, retrieveActivitiesCompletedCallback);
+  this.stravaApi.retrieveActivities(details.accessToken, latestId, newActivityCallback, retrieveActivitiesCompletedCallback);
 };
 
 module.exports = Retriever;

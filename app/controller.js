@@ -1,6 +1,7 @@
 
-function Controller(bridge) {
+function Controller(bridge, db) {
   this.bridge = bridge;
+  this.db = db;
 }
 
 Controller.prototype.set = function(retriever) {
@@ -8,11 +9,18 @@ Controller.prototype.set = function(retriever) {
 };
 
 Controller.prototype.handleNewConnection = function(details) {
-  // details.athleteId
-  // details.accessToken
   details.guid = this.bridge.connect(details.athleteId);
   console.log('controller: new connection: athleteId: ' + details.athleteId + ' => ' + details.guid);
-  this.retriever.retrieve(details);
+
+  // kick of async latest activity id retrieval which chains the full retrieval
+  var that = this;
+  this.db.retrieveLatestActivityId(details.athleteId, function(err, latestId) {
+    if (err) {
+      // TODO:
+      return console.log('TODO: ERROR: controller: startRetrieval error: ' + err);
+    }
+    that.retriever.retrieve(details, latestId);
+  });
   return details.guid;
 };
 
@@ -37,7 +45,7 @@ Controller.prototype.handleNewActivityStream = function(athleteId, activityId) {
 };
 
 Controller.prototype.handleAllNewActivitiesIdentified = function(athleteId) { 
-  // TOOD
+  // TODO
   console.log('TODO: controller: all new activities identified for: ' + athleteId);
 };
 
@@ -48,6 +56,7 @@ Controller.prototype.handleAnalysisResult = function(result) {
   result.bestEfforts.forEach(function(bestEffort) {
     that.bridge.send(result.athleteId, 'log', '  ' + bestEffort.distance.name + ' = ' + bestEffort.effort.duration);
   });
+  // TODO: check if all the results are in (delegate to cache?)
 };
 
 module.exports = Controller;

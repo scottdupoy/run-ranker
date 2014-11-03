@@ -15,6 +15,14 @@ Routes.prototype.home = function(req, res) {
     });
   }
 
+  // this kicks off the retrieval process asynchronously and works on a refresh
+  // NOTE: it is possible to kick this off as soon as authorised, but this
+  // simplifies things on page refreshes
+  req.session.guid = this.controller.handleNewConnection({
+    athleteId: req.session.athleteId,
+    accessToken: req.session.accessToken,
+  });
+
   // render the landing page. include the guid which will be passed back
   // to the server via the websocket so everything can be brought together
   console.log('landing: source ip: ' + ip + ' => ' + req.session.athleteFirstName + ' ' + req.session.athleteLastName + ' - ' + req.session.guid);
@@ -38,8 +46,6 @@ Routes.prototype.authorized = function(req, res) {
     return res.redirect('/');
   }
   
-  // TODO: avoid the use of localController by using better abstraction
-  var localController = this.controller;
   this.stravaApi.getAccessToken(req.query.code, function(err, data) {
     if (err) {
       console.log('get access token error: ' + err);
@@ -47,11 +53,6 @@ Routes.prototype.authorized = function(req, res) {
       return res.redirect('/');
     }
 
-    // this kicks off the retrieval process if necessary
-    req.session.guid = localController.handleNewConnection({
-      athleteId: data.athlete.id,
-      accessToken: data.access_token,
-    });
     req.session.accessToken = data.access_token;
     req.session.athleteId = data.athlete.id;
     req.session.athleteFirstName = data.athlete.firstname;
