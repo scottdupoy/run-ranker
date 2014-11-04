@@ -1,5 +1,13 @@
 var mongodb = require('mongodb').MongoClient;
 
+// Schema:
+// - one table for activities
+
+// TODO:
+// - unique constraint on athleteId + activityId
+// - index on athleteId and maybe activityId
+// - will need another table on user preferences (units, distances, net descents, etc)
+
 function Db(config) {
   this.config = config;
   this.db = null;
@@ -28,11 +36,8 @@ Db.prototype.disconnect = function() {
   }
 }
 
-// - one table for activities - TODO: unique constraint on athlete + activity.
-// - will need another table on user preferences (units, distances, net descents, etc)
-
 Db.prototype.retrieveLatestActivityId = function(athleteId, callback) {
-  var hackTarget = 3;
+  var hackTarget = 1;
   if (hackTarget > 1) {
     console.log('>>>>>> TODO: REMOVE HACK TARGET <<<<<<');
   }
@@ -53,9 +58,13 @@ Db.prototype.retrieveLatestActivityId = function(athleteId, callback) {
   });
 };
 
-Db.prototype.retrieveActivities = function(userId) {
-  // TODO: return all db results (cache will already have been checked)
-  return [ ];
+Db.prototype.retrieveActivities = function(athleteId, callback) {
+  this.collection.find({ athleteId: athleteId }).toArray(function(err, activities) {
+    if (err) {
+      return callback(err);
+    }
+    callback(null, activities);
+  });
 };
 
 Db.prototype.insertActivity = function(activity) {

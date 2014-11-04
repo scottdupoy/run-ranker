@@ -21,25 +21,20 @@ var messaging = new (require('./app/messaging'))(config, controller);
 var retriever = new (require('./app/retriever'))(stravaApi, messaging, controller);
 
 // hook up the final (cyclical) dependencies
-controller.set(retriever);
+controller.set(retriever, messaging);
 
 // web server setup
 var app = express();
 var server = http.Server(app);
 
 // TODO:
-//  - don't cache activities in a results array then process them all when we
-//    all of them, need to fire async events requesting the data to be processed
-//    at the same time.
 //  - if we hit a limit or have a problem then because activities are retrieved in reverse order
 //    then i think the latest id logic is flawed
-//  - store high-level details of manually entered runs. want monthly totals.
 //  - how will we detect if a user deletes an activity?... (wait for full refresh)
-//  - could speed things up a little by retrieving full details for all activities after the latest id
-//    (currently planing on waiting until we have the full list of what we need - could take a while
-//    unless it's possible to do a very large activity list retrieval...)
 //  - handle logging properly
 //  - handle errors properly
+//  - optional full retrievals via button
+//  - switch to https
 
 // set up app
 app.set('view engine', 'ejs');

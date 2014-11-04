@@ -41,14 +41,17 @@ module.exports.start = function(config, db) {
     console.log('amqp: queue "db-writer-analysis-results" created');
     queue.bind("run-ranker", "analysis-result", function() {
       console.log('amqp: queue "db-writer-analysis-results" bound to key "analysis-result"');
-      console.log('amqp: subscribing to queue');
-      queue.subscribe(subscriber);
+      queue.bind("run-ranker", "new-manual-activity", function() {
+        console.log('amqp: queue "db-writer-analysis-results" bound to key "new-manual-activity"');
+        console.log('amqp: subscribing to queue');
+        queue.subscribe(subscriber);
+      });
     });
   };
 
-  var subscriber = function(result) {
-    console.log('messaging: analysis result: ' + result.guid);
-    db.insertActivity(result);
+  var subscriber = function(activity) {
+    console.log('messaging: analysis result: ' + activity.athleteId + ' / ' + activity.activityId + ' => ' + activity.name);
+    db.insertActivity(activity);
   };
 
   connection.on('ready', createExchange);

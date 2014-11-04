@@ -74,5 +74,9 @@ Messaging.prototype.publishAnalysisRequest = function(request) {
   this.exchange.publish("analysis-request", request, { });
 };
 
+Messaging.prototype.publishNewManualActivity = function(activity) {
+  this.exchange.publish("new-manual-activity", activity, { });
+};
+
 module.exports = Messaging;
 

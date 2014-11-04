@@ -1,5 +1,5 @@
 var https = require('https');
-var perPage = 5;
+var perPage = 200; // 200 is max allowed
 
 function StravaApi(config) {
   this.config = config;
@@ -46,43 +46,41 @@ function retrieveActivitiesPage(accessToken, latestId, page, callback, completed
       data += chunk;
     })
     response.on('end', function() {
-      console.log('TODO: stravaApi: don\'t do much filtering here, let the controller do it...');
-      console.log('TODO: stravaApi: add full re-retrieval / check');
       var activities = JSON.parse(data);
       var newActivityRetrieved = false;
       activities.forEach(function (activity) {
-        // TODO: send new gps (and manual) activities to the mediator
-        // TODO: less filtering here
-        //console.log('TODO: send new gps (and manual) activities to the mediator');
         newActivityRetrieved |= (activity.id > latestId);
         if (activity.type == "Run"
           && activity.id > latestId
           && !activity.trainer
-          && !activity.manual
           && !activity.flagged
           && !activity.private) {
-          console.log('  new run:      ' + activity.id + ' => ' + activity.name);
           callback(null, {
-            id: activity.id,
+            activityId: activity.id,
             name: activity.name,
+            manual: activity.manual,
             distanceInKm: activity.distance / 1000.0,
-            moving_time: activity.moving_time,
-            elapsed_time: activity.elapsed_time,
-            start_date: activity.start_date_local,
+            movingTime: activity.moving_time,
+            elapsedTime: activity.elapsed_time,
+            startDate: activity.start_date_local,
           });
         }
       });
 
-      // stop if there are less than the perPage amount of activities
-      console.log('stravaApi: retrieved ' + activities.length + ' / ' + perPage + ' results');
-      if (newActivityRetrieved) {
-        console.log('stravaApi: retrieving next page');
-        retrieveActivitiesPage(accessToken, latestId, page + 1, callback);
-      }
-
+      // stop if there are less than the perPage amount of activities or we didn't find any new
+      // activities
+      console.log('stravaApi: retrieved ' + activities.length + ' / ' + perPage + ' results, new activities found: ' + newActivityRetrieved);
       if (activities.length < perPage) {
-        console.log('stravaApi: calling completedCallback');
+        console.log('stravaApi: retrieved last page, calling completedCallback');
         completedCallback();
+      }
+      else if (!newActivityRetrieved) {
+        console.log('stravaApi: retrieved no new activites, calling completedCallback');
+        completedCallback();
+      }
+      else {
+        console.log('stravaApi: retrieved new activities and not last page, retrieving next page');
+        retrieveActivitiesPage(accessToken, latestId, page + 1, callback, completedCallback);
       }
     });
   })
