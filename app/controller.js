@@ -53,7 +53,7 @@ Controller.prototype.handleRetrieveActivityStreamError = function(athleteId, err
 };
 
 Controller.prototype.handleNewActivity = function(activity) {
-  console.log('controller: new activity: ' + activity.athleteId + ' / ' + activity.id + ' => ' + activity.name);
+  console.log('controller: new activity: ' + activity.athleteId + ' / ' + activity.activityId + ' => ' + activity.name);
   this.cache.getAthlete(activity.athleteId).addNewActivity(activity);
 
   if (activity.manual) {
