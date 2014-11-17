@@ -6,6 +6,7 @@
       var guid = "<%= guid %>";
     </script>
     <script src='/scripts/jquery-2.1.1.min.js'></script>
+    <script src='/scripts/jquery.mustache.js'></script>
     <script src='/socket.io/socket.io.js'></script>
     <script src='/scripts/socket-client.js'></script>
   </head>
@@ -19,7 +20,24 @@ id:           <%= athleteId %>
 first name:   <%= firstName %>
 last name:    <%= lastName %>
 </pre>
+    <div id="content">
+      <div id="distances">
+        -- distances go here --
+      </div>
+    </div>
 <pre id='log'></pre>
+    <!-- templates -->
+    <script id="distancesTemplate" type="text/html">
+      <div id="distances">
+        results
+        {{#distances}}
+          <div class="distance">
+            {{name}}<br/>
+            {{distance}}
+          </div>
+        {{/distances}}
+      </div>
+    </script>
   </body>
 </html>
 

@@ -169,6 +169,7 @@ Athlete.prototype.projectData = function() {
   // order will be somewhat random
   var projections = [ ];
   var that = this;
+  // TODO: add distances summaries to data payload 
   Object.keys(this.activities).forEach(function(activityId) {
     var activity = that.activities[activityId];
 

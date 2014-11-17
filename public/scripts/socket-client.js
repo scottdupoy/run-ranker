@@ -24,9 +24,23 @@ $(function() {
   });
 
   socket.on('data', function(data) {
-    console.log('---- data --------------');
-    console.log(JSON.parse(data));
-    console.log('------------------------');
+    // need to cache in a top-level variable
+    var data = JSON.parse(data);
+    var template = $('#distancesTemplate').html();
+
+    var distances = [ ];
+    data.forEach(function(activity) {
+      console.log('>> ' + JSON.stringify(activity));
+      if (!("bestEfforts" in activity)) {
+        return;
+      }
+      activity.bestEfforts.forEach(function(effort) {
+        console.log('>>>> ' + JSON.stringify(effort));
+      });
+    });
+
+    var renderedDistances = $($.mustache(template, { distances: distances }));
+    $('#distances').replaceWith(renderedDistances);
   });
 
   // initiate async load

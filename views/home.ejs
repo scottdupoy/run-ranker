@@ -2,14 +2,13 @@
 <html>
   <head>
     <title>run</title>
+    <link rel="stylesheet" type="text/css" href="/style/main.css"></link>
   </head>
   <body>
-<pre>
-rdc home
-
-<a href="https://www.strava.com/oauth/authorize?client_id=<%= clientId %>&response_type=code&redirect_uri=http://run.dupoy.com/authorized">login</a>
-<!--<a href="https://www.strava.com/oauth/authorize?client_id=<%= clientId %>&response_type=code&approval_prompt=force&redirect_uri=http://run.dupoy.com/authorized">login</a>-->
-</pre>
+    <div class="nav">
+      <div class="header">rdc</div>
+      <div class="menu"><a href="https://www.strava.com/oauth/authorize?client_id=<%= clientId %>&response_type=code&redirect_uri=http://run.dupoy.com/authorized">login</a></div>
+    </div>
   </body>
 </html>
 

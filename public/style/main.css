@@ -1,0 +1,20 @@
+
+.nav {
+  width: 800px;
+  background-color: #dddddd;
+}
+
+.header {
+  width: 200px;
+  float: left;
+  text-align: left;
+  background-color: #bbbbff;
+}
+
+.menu {
+  width: 600px;
+  float: left;
+  text-align: right;
+  background-color: #bbbbbb;
+}
+
