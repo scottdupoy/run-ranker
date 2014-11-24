@@ -1,7 +1,8 @@
 var mongodb = require('mongodb').MongoClient;
 
 // Schema:
-// - one table for activities
+// - activities
+// - distances
 
 // TODO:
 // - unique constraint on athleteId + activityId
@@ -11,7 +12,8 @@ var mongodb = require('mongodb').MongoClient;
 function Db(config) {
   this.config = config;
   this.db = null;
-  this.collection = null;
+  this.activities = null;
+  this.distances = null;
 }
 
 Db.prototype.connect = function(callback) {
@@ -23,7 +25,8 @@ Db.prototype.connect = function(callback) {
     }
     console.log('connected to db');
     that.db = newConnection;
-    that.collection = that.db.collection('activities');
+    that.activities = that.db.collection('activities');
+    that.distances = that.db.collection('distances');
     callback();
   });
 }
@@ -41,7 +44,7 @@ Db.prototype.retrieveLatestActivityId = function(athleteId, callback) {
   if (hackTarget > 1) {
     console.log('>>>>>> TODO: REMOVE HACK TARGET <<<<<<');
   }
-  this.collection.find({ athleteId: athleteId }, { activityId: 1 }).sort({ activityId: -1 }).limit(hackTarget).toArray(function(err, results) {
+  this.activities.find({ athleteId: athleteId }, { activityId: 1 }).sort({ activityId: -1 }).limit(hackTarget).toArray(function(err, results) {
     if (err) {
       console.log('ERROR: db: could not retrieve latest id: ' + err);
       return callback(err);
@@ -59,7 +62,7 @@ Db.prototype.retrieveLatestActivityId = function(athleteId, callback) {
 };
 
 Db.prototype.retrieveActivities = function(athleteId, callback) {
-  this.collection.find({ athleteId: athleteId }).toArray(function(err, activities) {
+  this.activities.find({ athleteId: athleteId }).toArray(function(err, activities) {
     if (err) {
       return callback(err);
     }
@@ -83,8 +86,9 @@ Db.prototype.insertActivity = function(activity) {
     upsert: true,
   };
 
-  this.collection.update(key, data, options, function(err, recordsModified, status) {
+  this.activities.update(key, data, options, function(err, recordsModified, status) {
     if (err) {
+      // TODO: this should get bubbled up
       console.log('ERROR: problem saving activity: ' + err);
     }
     else {
@@ -94,7 +98,24 @@ Db.prototype.insertActivity = function(activity) {
 };
 
 Db.prototype.deleteAllActivities = function(athleteId, callback) {
-  this.collection.remove({ athleteId: athleteId }, callback);
+  this.activities.remove({ athleteId: athleteId }, callback);
+};
+
+Db.prototype.insertDistance = function(distance, callback) {
+  console.log('inserting distance: id: ' + distance.id + ', distanceInKm: ' + distance.distanceInKm + ', name: ' + distance.name + ', type: ' + distance.type);
+  this.distances.update({ id: distance.id }, distance, { upsert: true }, callback);
+};
+
+Db.prototype.retrieveDistances = function(callback) {
+  console.log('retrieving distances');
+  var that = this;
+  this.distances.find().toArray(function(err, results) {
+    if (err) {
+      return callback(err);
+    }
+    callback(null, results);
+  });
 };
 
 module.exports = Db;
+

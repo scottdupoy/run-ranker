@@ -12,9 +12,10 @@ var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, 'config.yaml'), 
 
 // using prototypes, order is important
 var db = new (require('./shared/db'))(config);
+var distances = new (require('./app/distances'))(db);
 var bridge = new (require('./app/bridge'))();
 var stravaApi = new (require('./app/stravaApi'))(config);
-var controller = new (require('./app/controller'))(bridge, db);
+var controller = new (require('./app/controller'))(bridge, db, distances);
 var routes = new (require('./routes/routes'))(config, controller, stravaApi);
 var io = new (require('./app/sockets'))(bridge);
 var messaging = new (require('./app/messaging'))(config, controller);
@@ -60,15 +61,26 @@ db.connect(function(err) {
   if (err) {
     return console.log("ERROR: couldn't connect to db: " + err);
   }
-  messaging.start(function(err) {
+
+  // need to load the distances object, do now and don't start the server until it's done
+  distances.load(function(err) {
     if (err) {
-      console.log("ERROR: couldn't start messaging: " + err);
+      console.log("ERROR: couldn't load db distances: " + err);
       db.disconnect();
       return;
     }
-    console.log('rabbitmq connection initiated, starting http server');
-    server.listen(config.http.port, config.http.host, function() {
-      console.log('server listening on ' + config.http.host + ':' + config.http.port);
+
+    messaging.start(function(err) {
+      if (err) {
+        console.log("ERROR: couldn't start messaging: " + err);
+        db.disconnect();
+        return;
+      }
+
+      console.log('rabbitmq connection initiated, starting http server');
+      server.listen(config.http.port, config.http.host, function() {
+        console.log('server listening on ' + config.http.host + ':' + config.http.port);
+      });
     });
   });
 });

@@ -6,8 +6,9 @@ var Athlete = require('./athlete');
 //    the athleteId in a details object.
 //  - add timer to flush out unaccessed athlete objects periodically
 
-function Cache(bridge) {
+function Cache(bridge, distances) {
   this.bridge = bridge;
+  this.distances = distances;
   this.map = { };
 }
 
@@ -15,7 +16,7 @@ Cache.prototype.getAthlete = function(athleteId) {
   if (athleteId in this.map) {
     return this.map[athleteId];
   }
-  var athlete = new Athlete({ athleteId: athleteId }, this.bridge);
+  var athlete = new Athlete({ athleteId: athleteId }, this.bridge, this.distances);
   this.map[athleteId] = athlete;
   return athlete;
 };

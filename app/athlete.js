@@ -8,9 +8,10 @@
 
 var checkLimitInSeconds = 30;
 
-function Athlete(details, bridge) {
+function Athlete(details, bridge, distances) {
   this.details = details;
   this.bridge = bridge;
+  this.distances = distances;
 
   this.activities = { }; // keyed on activityId
 
@@ -167,7 +168,11 @@ Athlete.prototype.sendStateUpdate = function() {
 
 Athlete.prototype.projectData = function() {
   // order will be somewhat random
-  var projections = [ ];
+  var projectedResults = {
+    distances: this.distances.distances,
+    activities: [ ],
+  };
+
   var that = this;
   // TODO: add distances summaries to data payload 
   Object.keys(this.activities).forEach(function(activityId) {
@@ -196,9 +201,9 @@ Athlete.prototype.projectData = function() {
       });
     }
 
-    projections.push(projection);
+    projectedResults.activities.push(projection);
   });
-  return projections;
+  return projectedResults;
 };
 
 // TODO: these are for the UI:

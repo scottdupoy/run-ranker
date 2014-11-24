@@ -1,9 +1,10 @@
 var Cache = require('./cache');
 
-function Controller(bridge, db) {
+function Controller(bridge, db, distances) {
   this.bridge = bridge;
   this.db = db;
-  this.cache = new Cache(this.bridge);
+  this.cache = new Cache(this.bridge, distances);
+  this.distances = distances;
 }
 
 Controller.prototype.set = function(retriever, messaging) {
@@ -29,7 +30,7 @@ Controller.prototype.handleNewConnection = function(details) {
     if (err) {
       return athlete.checkFailed('database latest id retrieval: ' + err);
     }
-    that.retriever.retrieve(details, latestId);
+    that.retriever.retrieve(details, latestId, that.distances.distances);
   });
 
   // kick off async database lookup of activities if not already loaded

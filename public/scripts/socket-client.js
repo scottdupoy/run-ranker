@@ -28,8 +28,8 @@ $(function() {
     var data = JSON.parse(data);
     var template = $('#distancesTemplate').html();
 
-    var distances = [ ];
-    data.forEach(function(activity) {
+    var distances = data.distances;
+    data.activities.forEach(function(activity) {
       console.log('>> ' + JSON.stringify(activity));
       if (!("bestEfforts" in activity)) {
         return;
