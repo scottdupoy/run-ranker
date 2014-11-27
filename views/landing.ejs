@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
+
   <head>
     <title>run</title>
+    <link rel="stylesheet" type="text/css" href="/style/main.css"></link>
     <script>
       var guid = "<%= guid %>";
     </script>
@@ -10,34 +12,53 @@
     <script src='/socket.io/socket.io.js'></script>
     <script src='/scripts/socket-client.js'></script>
   </head>
+
   <body>
-<pre id='content'>
-rdc landing
+    <div class='main'>
 
-<a href='/logout'>logout</a>
+      <div class='banner'>
+        <header class='bannerEdge'>
+          Run Analyser
+        </header>
+        <nav>
+          <ul>
+            <li class='bannerEdge'></li>
+            <li class='bannerEdge navLink navSelected'>Rankings</li>
+            <li class='bannerEdge navLink'>Runs</li>
+            <li class='bannerEdge navLink'><a class='nav' href='/logout'>Sign Out</a></li>
+          </ul>
+        </nav>
+      </div>
 
+      <div class='content'>
+        <div id='distances' class='distances'>
+        </div>
+      </div>
+
+    </div>
+
+<!--
 id:           <%= athleteId %>
 first name:   <%= firstName %>
 last name:    <%= lastName %>
-</pre>
-    <div id="content">
-      <div id="distances">
-        -- distances go here --
-      </div>
-    </div>
+-->
+
 <pre id='log'></pre>
+
     <!-- templates -->
-    <script id="distancesTemplate" type="text/html">
-      <div id="distances">
-        results
+    <script id='distancesTemplate' type='text/html'>
+      <div id='distances' class='distances'>
+        <div class='sectionHeader'>
+          Distances
+        </div>
         {{#distances}}
-          <div class="distance">
-            {{name}}<br/>
-            {{distance}}
+          <div class='distance'>
+            {{name}}
           </div>
         {{/distances}}
       </div>
     </script>
+
   </body>
 </html>
 
