@@ -7,6 +7,7 @@ var cookieParser = require('cookie-parser');
 var favicon = require('serve-favicon');
 var yaml = require('js-yaml');
 var fs = require('fs');
+var sass = require('node-sass-middleware');
 
 var config = yaml.safeLoad(fs.readFileSync(path.join(__dirname, 'config.yaml'), 'utf8'));
 
@@ -43,6 +44,14 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(
+  sass({
+    src: path.join(__dirname, '/scss'),
+    dest: path.join(__dirname, '/public/style'),
+    prefix: '/style',
+    debug: true,
+  })
+);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
   secret: config.security.sessionSecret,

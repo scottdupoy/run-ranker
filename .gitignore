@@ -27,5 +27,8 @@ node_modules
 # Users Environment Variables
 .lock-wscript
 
-
 config.yaml
+
+# compiled css folder
+public/style
+

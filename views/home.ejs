@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>run</title>
+    <title>Run Analyser</title>
     <link rel="stylesheet" type="text/css" href="/style/main.css"></link>
   </head>
   <body>
-    <div class="nav">
-      <div class="header">Rankings</div>
-      <div class="menu"><a href="https://www.strava.com/oauth/authorize?client_id=<%= clientId %>&response_type=code&redirect_uri=http://run.dupoy.com/authorized">Sign In</a></div>
+    <div class='main'>
+      <div class='banner'>
+        <header class='bannerEdge'>
+          Run Analyser
+        </header>
+        <nav>
+          <ul>
+            <li class='bannerEdge'></li>
+            <li class='bannerEdge navLink'><a class='nav' href='https://www.strava.com/oauth/authorize?client_id=<%= clientId %>&response_type=code&redirect_uri=http://run.dupoy.com/authorized'>Sign In</a></li>
+          </ul>
+        </nav>
+      </div>
     </div>
   </body>
 </html>
