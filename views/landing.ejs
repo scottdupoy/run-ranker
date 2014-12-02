@@ -25,7 +25,7 @@
           <ul>
             <li class='bannerEdge'></li>
             <li class='bannerEdge navLink navSelected'>Rankings</li>
-            <li class='bannerEdge navLink'>Runs</li>
+            <!--<li class='bannerEdge navLink'>Runs</li>-->
             <li class='bannerEdge navLink'><a class='nav' href='/logout'>Sign Out</a></li>
           </ul>
         </nav>
@@ -33,6 +33,8 @@
 
       <div class='content'>
         <div id='distances' class='distances'>
+        </div>
+        <div id='efforts' class='efforts'>
         </div>
       </div>
 
@@ -53,10 +55,28 @@ last name:    <%= lastName %>
           Distances
         </div>
         {{#distances}}
-          <div class='distance'>
+          <div class='distance' id='distance{{id}}'>
             {{name}}
           </div>
         {{/distances}}
+      </div>
+    </script>
+
+    <script id='effortsTemplate' type='text/html'>
+      <div id='efforts' class='efforts'>
+        <div class='effortsHeader'>
+          Best Efforts: {{distance.name}}
+        </div>
+        <table class='effortsTable'>
+          <thead>
+            <tr><th></th><th>#</th><th>Time</th><th>Pace K</th><th>Pace M</th><th>Date</th><th class='activityName'>Name</th></tr>
+          </thead>
+          <tbody>
+            {{#efforts}}
+              <tr{{{newClass}}}><td>{{new}}</td><td>{{position}}</td><td>{{time}}</td><td>{{paceK}}</td><td>{{paceM}}</td><td>{{date}}</td><td>{{name}}</td></tr>
+            {{/efforts}}
+          </tbody>
+        </table>
       </div>
     </script>
 

@@ -107,25 +107,24 @@ nav {
   width: 20%;
 }
 
+@mixin highlightedDistance {
+  color: $textHighlightedColour !important;
+  border-left: 4px solid $highlightedColour !important;
+  cursor: pointer;
+}
+
+.selectedDistance {
+  @include highlightedDistance;
+}
+
 .distance {
   padding: 6px 0 6px 6px;
   margin: 4px 0 4px 0;
   color: $textColour;
   border-left: 4px solid $colour;
-}
-
-@mixin highlightedDistance {
-  color: $textHighlightedColour;
-  border-left: 4px solid $highlightedColour;
-  cursor: pointer;
-}
-
-.highlightedDistance {
-  @include highlightedDistance;
-}
-
-.selectedDistance {
-  @include highlightedDistance;
+  &:hover {
+    @include highlightedDistance;
+  }
 }
 
 .efforts {
@@ -151,6 +150,7 @@ table.effortsTable {
   }
   td:last-child {
     text-align: left;
+    padding-right: 4px;
   }
 }
 
@@ -160,17 +160,9 @@ tr.new {
   }
 }
 
-.activityName {
-  text-align: left;
-  padding-right: 4px;
-}
-
+/* for the whole row */
 .newActivity {
-  font-size: 8pt;
-  vertical-align: middle;
   color: $highlightedColour;
-  padding-left: 4px;
-  padding-right: 10px;
 }
 
 #log {

@@ -29,15 +29,6 @@ controller.set(retriever, messaging);
 var app = express();
 var server = http.Server(app);
 
-// TODO:
-//  - if we hit a limit or have a problem then because activities are retrieved in reverse order
-//    then i think the latest id logic is flawed
-//  - how will we detect if a user deletes an activity?... (wait for full refresh)
-//  - handle logging properly
-//  - handle errors properly
-//  - optional full retrievals via button
-//  - switch to https
-
 // set up app
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));

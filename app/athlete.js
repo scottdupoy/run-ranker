@@ -186,6 +186,7 @@ Athlete.prototype.projectData = function() {
       distanceInKm: activity.distanceInKm,
       elapsedTime: activity.elapsedTime,
       movingTime: activity.movingTime,
+      date: activity.startDate,
     };
 
     activity.new = false;
