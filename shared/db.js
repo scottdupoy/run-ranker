@@ -40,7 +40,7 @@ Db.prototype.disconnect = function() {
 }
 
 Db.prototype.retrieveLatestActivityId = function(athleteId, callback) {
-  var hackTarget = 1;
+  var hackTarget = 5;
   if (hackTarget > 1) {
     console.log('>>>>>> TODO: REMOVE HACK TARGET <<<<<<');
   }

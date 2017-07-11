@@ -1,5 +1,3 @@
-var nameLengthLimit = 36;
-
 var socket;
 var log;
 
@@ -75,11 +73,6 @@ function processData(rawData) {
       effort.newClass = '';
       if (effort.new == "NEW") {
         effort.newClass = " class='new'";
-      }
-
-      // tidy up name if it's too long
-      if (effort.name.length > nameLengthLimit) {
-        effort.name = effort.name.substring(0, nameLengthLimit - 3) + '...';
       }
 
       position++;
